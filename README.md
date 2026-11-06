@@ -134,16 +134,3 @@ scripts/cleanup_lab.sh     # Stops devices, removes namespaces
 tests/test_crypto.py       # Cryptographic and packet round-trip tests
 ```
 
-## Suggested oral defense
-
-**What is the topology?** Two host namespaces and two inline device namespaces connected by three virtual Ethernet pairs.
-
-**Why DH?** To derive a common secret without transmitting the final AES key. We use X25519 (modern elliptic-curve Diffie–Hellman), HMAC-PSK for authentication, and HKDF for traffic keys.
-
-**Why AES-GCM?** It encrypts the data and provides a tag to detect tampering. The receiver releases plaintext only after successful tag verification.
-
-**What changes in each packet?** TCP data becomes ciphertext+16-byte tag. We keep original IP/TCP addresses, ports, flags, numbers and options, but update length/checksums. There is no extra protocol header.
-
-**How is nonce uniqueness guaranteed?** Per-direction key/prefix and strictly incrementing 64-bit counter, one increment per encrypted packet, even retransmissions. A fresh DH session produces new keys. Receiver tries expected counter candidates because nonce metadata is forbidden.
-
-**What are the limits?** Searching nonce candidates is slow; bounded loss/reordering, small MTU-safe payloads, and this is a teaching prototype, not a production security product.
